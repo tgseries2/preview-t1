@@ -23,3 +23,13 @@
 
 ### Test the Bot
 - Run `main.py` to start the bot, ensuring it connects to Ethereum, loads ABIs, and executes trades without errors.
+
+# Key Features 🚀
+
+- ✅ **Flash Loan Arbitrage**: Borrows capital from dYdX with zero upfront capital, executes arbitrage trades across multiple DEXs (e.g., Uniswap, SushiSwap), repays the loan within the same transaction, and only executes when profitable.
+- ✅ **Sandwich Attacks (MEV Exploits)**: Detects pending transactions in the mempool, front-runs a victim’s trade with a buy order, uses the victim’s order to increase the token price, and immediately sells after for profit, protected against failed or unprofitable trades.
+- 🛠️ **Gas Optimization & MEV Protection**: Prioritizes low-gas cost execution, uses gas-efficient smart contract calls, avoids front-running by other bots with Flashbots or private mempools.
+- 🛠️ **Profitability Checks & Error Handling**: Ensures only profitable trades are executed, double-checks prices and slippage, skips unprofitable or failed transactions, and logs errors to prevent execution failures.
+- 📡 **On-Chain & Off-Chain Components**: Uses Web3.py to interact with Ethereum-based DEXs, loads contract ABIs dynamically, and monitors the Ethereum mempool in real-time for opportunities.
+- ⚡ **Atomic Execution**: Ensures all transactions (borrowing, swapping, repaying) happen in one atomic transaction; if any step fails, the entire transaction reverts, preventing losses.
+- 🌐 **Compatibility & Scalability**: Works with Ethereum Mainnet, Arbitrum, BSC, Polygon, and other EVM-compatible chains, integrates with private RPCs or Flashbots for stealth execution, and runs 24/7 without manual intervention.
