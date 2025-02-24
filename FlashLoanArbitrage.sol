@@ -62,8 +62,6 @@ contract FlashLoanArbitrage {
         uint256 amountBorrow,
         address dex1, // e.g., Uniswap Router
         address dex2, // e.g., SushiSwap Router
-        address[] calldata path1, // e.g., [tokenBorrow, tokenB]
-        address[] calldata path2, // e.g., [tokenB, tokenBorrow]
         uint256 minProfit // Minimum profit in tokenBorrow units
     ) external onlyOwner {
         require(marketIdForToken[tokenBorrow] != 0, "Unsupported token");
@@ -85,9 +83,9 @@ contract FlashLoanArbitrage {
             data: ""
         });
 
-        // Step 2: Execute trades
-        bytes memory callData = abi.encodeWithSelector(
-            this.performTrades.selector, dex1, dex2, path1, path2, amountBorrow, minProfit
+        // Step 2: Execute trades (use a struct or split params to reduce stack depth)
+        bytes memory callData = abi.encode(
+            dex1, dex2, amountBorrow, minProfit
         );
         actions[1] = ISoloMargin.ActionArgs({
             actionType: 4, // Call
@@ -118,17 +116,23 @@ contract FlashLoanArbitrage {
     function performTrades(
         address dex1,
         address dex2,
-        address[] calldata path1,
-        address[] calldata path2,
         uint256 amountBorrow,
         uint256 minProfit
     ) external {
         require(msg.sender == address(this), "Only self");
 
+        // Hardcoded paths for WETH-DAI arbitrage (example)
+        address[] memory path1 = new address[](2);
+        address[] memory path2 = new address[](2);
+        path1[0] = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // WETH
+        path1[1] = 0x6B175474E89094C44Da98b954EedeAC495271d0F; // DAI
+        path2[0] = 0x6B175474E89094C44Da98b954EedeAC495271d0F; // DAI
+        path2[1] = 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2; // WETH
+
         IERC20 tokenBorrow = IERC20(path1[0]);
         require(tokenBorrow.approve(dex1, amountBorrow), "DEX1 approval failed");
 
-        // Swap on DEX1 (e.g., tokenBorrow -> tokenB)
+        // Swap on DEX1
         IUniswapV2Router(dex1).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountBorrow, 0, path1, address(this), block.timestamp + 60
         );
@@ -137,7 +141,7 @@ contract FlashLoanArbitrage {
         uint256 amountB = tokenB.balanceOf(address(this));
         require(tokenB.approve(dex2, amountB), "DEX2 approval failed");
 
-        // Swap on DEX2 (e.g., tokenB -> tokenBorrow)
+        // Swap on DEX2
         IUniswapV2Router(dex2).swapExactTokensForTokensSupportingFeeOnTransferTokens(
             amountB, 0, path2, address(this), block.timestamp + 60
         );
