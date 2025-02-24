@@ -14,6 +14,10 @@ To run the MEV Sandwich Bot on Ubuntu, you need to install the following Python 
 - **web3.py**: For interacting with the Ethereum blockchain.
 - **flashbots**: For MEV protection and private transaction submission via Flashbots.
 - **python-dotenv**: For loading environment variables from a `.env` file.
+```bash
+
+pip install web3.py flashbots python-dotenv
+```
 
 # MEV Sandwich Bot in Python
 
