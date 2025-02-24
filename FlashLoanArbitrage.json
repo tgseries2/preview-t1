@@ -1,0 +1,179 @@
+[
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "tokenBorrow",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amountBorrow",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "profit",
+				"type": "uint256"
+			}
+		],
+		"name": "ArbitrageExecuted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "marketId",
+				"type": "uint256"
+			}
+		],
+		"name": "MarketIdUpdated",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "tokenBorrow",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amountBorrow",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "dex1",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "dex2",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "minProfit",
+				"type": "uint256"
+			}
+		],
+		"name": "initiateArbitrage",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "marketIdForToken",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "dex1",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "dex2",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "amountBorrow",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "minProfit",
+				"type": "uint256"
+			}
+		],
+		"name": "performTrades",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "soloMargin",
+		"outputs": [
+			{
+				"internalType": "contract ISoloMargin",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "marketId",
+				"type": "uint256"
+			}
+		],
+		"name": "updateMarketId",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
+	}
+]
