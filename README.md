@@ -1,11 +1,11 @@
 # MEV Sandwich Bot Implementation
 ## Code Structure
 
-> main.py: Entry point, orchestrates the bot's components. \
-> sandwich.py: Handles sandwich attack logic. \
-> arbitrage.py: Manages flash loan arbitrage. \
-> utils.py: Utility functions for reserves, profit calculations, etc. \
-> config.py: Configuration settings.
+> `main.py`: Entry point, orchestrates the bot's components. \
+> `sandwich.py`: Handles sandwich attack logic. \
+> `arbitrage.py`: Manages flash loan arbitrage. \
+> `utils.py`: Utility functions for reserves, profit calculations, etc. \
+> `config.py`: Configuration settings.
 
 ## Required Libraries 📚
 
