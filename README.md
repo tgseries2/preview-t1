@@ -1,5 +1,5 @@
 # MEV Sandwich Bot Implementation
-# Code Structure
+## Code Structure
 
 > main.py: Entry point, orchestrates the bot's components. \
 > sandwich.py: Handles sandwich attack logic. \
