@@ -26,32 +26,54 @@ interface IERC20 {
 }
 
 interface IUniswapV2Router {
-    function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts);
+    function swapExactTokensForTokensSupportingFeeOnTransferTokens(
+        uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline
+    ) external returns (uint256[] memory amounts);
 }
 
 contract FlashLoanArbitrage {
-    address public owner;
-    ISoloMargin public soloMargin = ISoloMargin(0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e);
+    address public immutable owner;
+    ISoloMargin public constant soloMargin = ISoloMargin(0x1E0447b19BB6EcFdAe1e4AE1694b0C3659614e4e); // dYdX Solo Margin
     mapping(address => uint256) public marketIdForToken;
+    
+    event ArbitrageExecuted(address indexed tokenBorrow, uint256 amountBorrow, uint256 profit);
+    event MarketIdUpdated(address indexed token, uint256 marketId);
 
     constructor() {
         owner = msg.sender;
+        // Ethereum Mainnet dYdX market IDs
         marketIdForToken[0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2] = 0; // WETH
+        marketIdForToken[0x6B175474E89094C44Da98b954EedeAC495271d0F] = 2; // DAI
+        marketIdForToken[0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48] = 3; // USDC
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
+    function updateMarketId(address token, uint256 marketId) external onlyOwner {
+        marketIdForToken[token] = marketId;
+        emit MarketIdUpdated(token, marketId);
     }
 
     function initiateArbitrage(
         address tokenBorrow,
         uint256 amountBorrow,
-        address dex1,
-        address dex2,
-        address tokenA,
-        address tokenB
-    ) external {
-        require(msg.sender == owner, "Only owner");
-        ISoloMargin.ActionArgs[] memory actions = new ISoloMargin.ActionArgs[](3);
+        address dex1, // e.g., Uniswap Router
+        address dex2, // e.g., SushiSwap Router
+        address[] calldata path1, // e.g., [tokenBorrow, tokenB]
+        address[] calldata path2, // e.g., [tokenB, tokenBorrow]
+        uint256 minProfit // Minimum profit in tokenBorrow units
+    ) external onlyOwner {
+        require(marketIdForToken[tokenBorrow] != 0, "Unsupported token");
+
         ISoloMargin.AccountInfo[] memory accounts = new ISoloMargin.AccountInfo[](1);
         accounts[0] = ISoloMargin.AccountInfo(address(this), 1);
 
+        ISoloMargin.ActionArgs[] memory actions = new ISoloMargin.ActionArgs[](3);
+
+        // Step 1: Borrow from dYdX
         actions[0] = ISoloMargin.ActionArgs({
             actionType: 1, // Withdraw
             accountId: 0,
@@ -63,7 +85,10 @@ contract FlashLoanArbitrage {
             data: ""
         });
 
-        bytes memory callData = abi.encodeWithSelector(this.performTrades.selector, tokenA, tokenB, dex1, dex2, amountBorrow);
+        // Step 2: Execute trades
+        bytes memory callData = abi.encodeWithSelector(
+            this.performTrades.selector, dex1, dex2, path1, path2, amountBorrow, minProfit
+        );
         actions[1] = ISoloMargin.ActionArgs({
             actionType: 4, // Call
             accountId: 0,
@@ -75,6 +100,7 @@ contract FlashLoanArbitrage {
             data: callData
         });
 
+        // Step 3: Repay dYdX
         actions[2] = ISoloMargin.ActionArgs({
             actionType: 0, // Deposit
             accountId: 0,
@@ -89,23 +115,43 @@ contract FlashLoanArbitrage {
         soloMargin.operate(accounts, actions);
     }
 
-    function performTrades(address tokenA, address tokenB, address dex1, address dex2, uint256 amountBorrow) external {
-        IERC20(tokenA).approve(dex1, amountBorrow);
-        address[] memory path = new address[](2);
-        path[0] = tokenA;
-        path[1] = tokenB;
-        IUniswapV2Router(dex1).swapExactTokensForTokens(amountBorrow, 0, path, address(this), block.timestamp + 60);
+    function performTrades(
+        address dex1,
+        address dex2,
+        address[] calldata path1,
+        address[] calldata path2,
+        uint256 amountBorrow,
+        uint256 minProfit
+    ) external {
+        require(msg.sender == address(this), "Only self");
 
-        uint256 amountB = IERC20(tokenB).balanceOf(address(this));
-        IERC20(tokenB).approve(dex2, amountB);
-        path[0] = tokenB;
-        path[1] = tokenA;
-        IUniswapV2Router(dex2).swapExactTokensForTokens(amountB, 0, path, address(this), block.timestamp + 60);
+        IERC20 tokenBorrow = IERC20(path1[0]);
+        require(tokenBorrow.approve(dex1, amountBorrow), "DEX1 approval failed");
 
-        uint256 finalA = IERC20(tokenA).balanceOf(address(this));
-        require(finalA >= amountBorrow, "Not profitable");
-        if (finalA > amountBorrow) {
-            IERC20(tokenA).transfer(owner, finalA - amountBorrow);
+        // Swap on DEX1 (e.g., tokenBorrow -> tokenB)
+        IUniswapV2Router(dex1).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountBorrow, 0, path1, address(this), block.timestamp + 60
+        );
+
+        IERC20 tokenB = IERC20(path2[0]);
+        uint256 amountB = tokenB.balanceOf(address(this));
+        require(tokenB.approve(dex2, amountB), "DEX2 approval failed");
+
+        // Swap on DEX2 (e.g., tokenB -> tokenBorrow)
+        IUniswapV2Router(dex2).swapExactTokensForTokensSupportingFeeOnTransferTokens(
+            amountB, 0, path2, address(this), block.timestamp + 60
+        );
+
+        uint256 finalBalance = tokenBorrow.balanceOf(address(this));
+        require(finalBalance >= amountBorrow, "Cannot repay loan");
+        uint256 profit = finalBalance - amountBorrow;
+        require(profit >= minProfit, "Profit too low");
+
+        if (profit > 0) {
+            require(tokenBorrow.transfer(owner, profit), "Profit transfer failed");
+            emit ArbitrageExecuted(address(tokenBorrow), amountBorrow, profit);
         }
     }
+
+    receive() external payable {}
 }
