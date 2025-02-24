@@ -5,8 +5,16 @@
 > sandwich.py: Handles sandwich attack logic. \
 > arbitrage.py: Manages flash loan arbitrage. \
 > utils.py: Utility functions for reserves, profit calculations, etc. \
-> config.py: Configuration settings. \
-> 
+> config.py: Configuration settings.
+
+## Required Libraries 📚
+
+To run the MEV Sandwich Bot on Ubuntu, you need to install the following Python libraries:
+
+- **web3.py**: For interacting with the Ethereum blockchain.
+- **flashbots**: For MEV protection and private transaction submission via Flashbots.
+- **python-dotenv**: For loading environment variables from a `.env` file.
+
 # MEV Sandwich Bot in Python
 
 ## Setup and Deployment Instructions
