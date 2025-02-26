@@ -1,5 +1,5 @@
 from web3 import Web3
-from flashbots import Flashbot
+from flashbots import FlashbotsWeb3
 import threading
 from config import *
 from sandwich import monitor_mempool
@@ -7,7 +7,7 @@ from arbitrage import check_arbitrage_opportunities
 
 def main():
     web3 = Web3(Web3.HTTPProvider(RPC_URL))
-    flashbot = Flashbot(web3, PRIVATE_KEY)
+    flashbot = FlashbotsWeb3(web3, PRIVATE_KEY)
     global ACCOUNT
     ACCOUNT = web3.eth.account.from_key(PRIVATE_KEY).address
 
